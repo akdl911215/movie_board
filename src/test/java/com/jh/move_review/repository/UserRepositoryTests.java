@@ -4,6 +4,8 @@ import com.jh.move_review.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.IntStream;
 
@@ -12,6 +14,23 @@ public class UserRepositoryTests {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Test
+    @Commit
+    @Transactional
+    public void testDeleteUser() {
+
+        Long userId = 2L;
+
+        User user = User.builder().id(userId).build();
+
+        reviewRepository.deleteByUser(user);
+        userRepository.deleteById(userId);
+
+    }
 
     @Test
     public void insertUsers() {

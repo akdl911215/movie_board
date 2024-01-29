@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 @SpringBootTest
@@ -14,6 +15,25 @@ public class ReviewRepositoryTests {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
+    @Test
+    public void testGetMovieReviews() {
+
+        Movie movie = Movie.builder()
+                .id(93L)
+                .build();
+
+        List<Review> result = reviewRepository.findByMovie(movie);
+
+        result.forEach(movieReview -> {
+
+            System.out.println(movieReview.getId());
+            System.out.println("\t" + movieReview.getGrade());
+            System.out.println("\t" + movieReview.getText());
+            System.out.println("\t" + movieReview.getUser().getEmail());
+            System.out.println("-----------------------------");
+        });
+    }
 
     @Test
     public void insertMovieReviews() {
