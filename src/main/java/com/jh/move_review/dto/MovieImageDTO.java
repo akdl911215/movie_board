@@ -1,37 +1,40 @@
 package com.jh.move_review.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 @Data
 @AllArgsConstructor
-public class UploadResultDTO implements Serializable {
+@NoArgsConstructor
+@Builder
+public class MovieImageDTO {
 
-    private String fileName;
     private String uuid;
-    private String folderPath;
+
+    private String imageName;
+
+    private String path;
 
     public String getImageURL() {
         try {
-            return URLEncoder.encode(folderPath + "/" + uuid + "_" + fileName, "UTF-8");
+            return URLEncoder.encode(path + "/" + uuid + "_" + imageName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
         return "";
     }
 
     public String getThumbnailURL() {
         try {
-            return URLEncoder.encode(folderPath + "/s_" + uuid + "_" + fileName, "UTF-8");
+            return URLEncoder.encode(path + "/s_" + uuid + "_" + imageName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
         return "";
     }
 }

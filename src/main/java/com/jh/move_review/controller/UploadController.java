@@ -2,19 +2,19 @@ package com.jh.move_review.controller;
 
 import com.jh.move_review.dto.UploadResultDTO;
 import lombok.extern.log4j.Log4j2;
+import net.coobird.thumbnailator.Thumbnailator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,15 +28,45 @@ import java.util.UUID;
 @RestController
 @Log4j2
 @RequestMapping("/movie/")
+@CrossOrigin("*")
 public class UploadController {
 
     @Value("${movie.upload.path}")
     private String uploadPath;
 
+    @Transactional
+    @DeleteMapping("/removeFile")
+    public ResponseEntity<Boolean> removeFile(String fileName) {
+
+        String srcFileName = null;
+
+        try {
+
+            srcFileName = URLDecoder.decode(fileName, "UTF-8");
+            File file = new File(uploadPath + File.separator + srcFileName);
+            log.info("file : " + file);
+            boolean result = file.delete();
+            if (!result) return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            File thumbnail = new File(file.getParent(), "s_" + file.getName());
+
+            result = thumbnail.delete();
+
+            return new ResponseEntity<>(result, HttpStatus.OK);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
     @GetMapping("/display")
     public ResponseEntity<byte[]> getFile(String fileName) {
+        log.info("fileName : " + fileName);
 
         ResponseEntity<byte[]> result = null;
+        log.info("up result : " + result);
 
         try {
             String srcFileName = URLDecoder.decode(fileName, "UTF-8");
@@ -44,6 +74,7 @@ public class UploadController {
 
             File file = new File(uploadPath + File.separator + srcFileName);
             log.info("file : " + file);
+
 
             HttpHeaders header = new HttpHeaders();
 
@@ -53,7 +84,9 @@ public class UploadController {
 
             // 파일 데이터 처리
             result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file), header, HttpStatus.OK);
+            log.info("result : " + result);
         } catch (Exception e) {
+            log.info("check");
             log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -94,6 +127,7 @@ public class UploadController {
 
             // 저장할 파일 이름 중간에 "_"를 이용해서 구분
             String saveName = uploadPath + File.separator + folderPath + File.separator + uuid + "_" + fileName;
+//            String saveName = uploadPath + File.separator + folderPath + File.separator + uuid + fileName;
             // File.separator > unix / or window \\ 구분자 추가됨
             log.info("saveName : " + saveName);
 
@@ -102,6 +136,14 @@ public class UploadController {
 
             try {
                 uploadFile.transferTo(savePath); // 실제 이미지 저장
+
+                // 섬네일 생성
+                String thumbnailSaveName = uploadPath + File.separator + folderPath + File.separator + "s_" + uuid + "_" + fileName;
+                // 섬네일 파일 이름은 중간에 s_로 시작하도록
+                File thumbnailFile = new File(thumbnailSaveName);
+                // 섬네일 생성
+                Thumbnailator.createThumbnail(savePath.toFile(), thumbnailFile, 100, 100);
+
                 resultDTOList.add(new UploadResultDTO(fileName, uuid, folderPath));
             } catch (IOException e) {
                 e.printStackTrace();
